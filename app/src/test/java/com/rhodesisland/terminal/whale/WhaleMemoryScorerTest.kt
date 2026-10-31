@@ -179,8 +179,9 @@ class WhalePetRulesTest {
 
     @Test
     fun `饥饿时心情掉得更快`() {
-        val now = 3_600_000L
-        val hungry = state(hunger = 5f, mood = 50f, lastTick = now - 3_600_000L)
+        // lastTick 必须 > 0，否则 decay 会按「首次结算」跳过衰减
+        val now = 3_600_001L
+        val hungry = state(hunger = 5f, mood = 50f, lastTick = 1L)
         val after = WhalePetRules.decay(hungry, now)
         assertTrue("饥饿时心情应低于正常速率", after.mood < 50f - 2.2f)
     }
