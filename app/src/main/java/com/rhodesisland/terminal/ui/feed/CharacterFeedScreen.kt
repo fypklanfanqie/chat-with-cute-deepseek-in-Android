@@ -61,6 +61,8 @@ import kotlinx.coroutines.launch
 /** 聊天 Tab 内嵌导航的路由常量。
  * 注意：内层 CHAT 不要与外层 BottomTab.Chat.route = "chat" 同名，避免导航日志/条件判断混淆。 */
 object FeedRoute {
+    /** 鲸鱼娘对话（改造后的首屏）。 */
+    const val WHALE = "whale_home"
     const val FEED = "feed"
     const val CHAT = "chat_detail"
     const val ENCOUNTER = "encounter"

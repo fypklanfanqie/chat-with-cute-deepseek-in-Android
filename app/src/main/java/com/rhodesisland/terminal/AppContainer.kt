@@ -68,6 +68,10 @@ import com.rhodesisland.terminal.provider.ChatProviderManager
 import com.rhodesisland.terminal.provider.cloud.CloudChatProvider
 import com.rhodesisland.terminal.provider.local.LocalChatProvider
 import com.rhodesisland.terminal.tts.VolcTtsClient
+import com.rhodesisland.terminal.whale.memory.WhaleMemoryRepository
+import com.rhodesisland.terminal.whale.pet.WhalePetRepository
+import com.rhodesisland.terminal.whale.settings.WhaleSettingsRepository
+import com.rhodesisland.terminal.whale.sticker.WhaleStickerStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
@@ -522,4 +526,11 @@ class AppContainer(private val context: Context) {
     val modelManager: ModelManager by lazy {
         ModelManager(context, downloadManager, settingsRepository, backendManager)
     }
+
+    // ===== 鲸鱼娘模块（独立存储与仓库；不侵入原角色/世界书体系）=====
+    /** 鲸鱼娘设置（独立 DataStore `whale_settings` + 加密 Key 存储）。 */
+    val whaleSettingsRepository by lazy { WhaleSettingsRepository(context, settingsRepository) }
+    val whaleMemoryRepository by lazy { WhaleMemoryRepository(database.whaleMemoryDao()) }
+    val whalePetRepository by lazy { WhalePetRepository(database.whalePetDao()) }
+    val whaleStickerStore by lazy { WhaleStickerStore(context) }
 }

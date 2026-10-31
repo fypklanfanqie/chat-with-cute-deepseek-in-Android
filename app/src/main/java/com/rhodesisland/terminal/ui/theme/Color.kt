@@ -152,3 +152,69 @@ fun fieldTextColor(): Color = if (LocalDarkTheme.current) FieldTextDark else Fie
 @Composable
 fun fieldPlaceholderColor(): Color =
     if (LocalDarkTheme.current) FieldPlaceholderDark else FieldPlaceholderLight
+
+// ==================== 鲸鱼娘皮肤（DeepSeek 蓝白海洋） ====================
+// 与 Iris 系列并列的第三套调色板：只在鲸鱼娘模块 + 「整 App 切肤」时启用。
+// 色值取自产品规格（主蓝 #4D6BFE / 深蓝文字 #14224F / 页面底 #F2F7FF→#E8F1FF）。
+
+val WhaleBlue = Color(0xFF4D6BFE)
+val WhaleBlueLight = Color(0xFF6D8BFF)
+val WhaleInk = Color(0xFF14224F)
+val WhaleText = Color(0xFF16213E)
+val WhaleTextSecondary = Color(0xFF6B7A99)
+val WhaleBgTop = Color(0xFFF2F7FF)
+val WhaleBgBottom = Color(0xFFE8F1FF)
+val WhaleCard = Color(0xFFFFFFFF).copy(alpha = 0.78f)
+val WhaleDivider = Color(0x1F4D6BFE)      // rgba(77,107,254,0.12)
+val WhaleError = Color(0xFFD64545)
+val WhaleSuccess = Color(0xFF2FBF71)
+
+val WhaleLightColors: ColorScheme = lightColorScheme(
+    primary = WhaleBlue,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFE3EAFF),
+    onPrimaryContainer = WhaleInk,
+    secondary = WhaleBlueLight,
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFEDF2FF),
+    onSecondaryContainer = WhaleInk,
+    tertiary = Color(0xFF56C8E8),
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFDDF6FF),
+    onTertiaryContainer = Color(0xFF073B4A),
+    background = WhaleBgTop,
+    onBackground = WhaleText,
+    surface = Color.White,
+    onSurface = WhaleText,
+    surfaceVariant = Color(0xFFE9EFFF),
+    onSurfaceVariant = WhaleTextSecondary,
+    surfaceTint = WhaleBlue,
+    inverseSurface = WhaleInk,
+    inverseOnSurface = Color(0xFFF2F7FF),
+    outline = Color(0xFFC9D6F2),
+    outlineVariant = Color(0xFFE2EAFB),
+    error = WhaleError,
+    onError = Color.White,
+    errorContainer = Color(0xFFFFE4E1),
+    onErrorContainer = Color(0xFF5C0F0F),
+    scrim = Color(0xFF0B1B3A),
+    surfaceBright = Color.White,
+    surfaceDim = Color(0xFFDCE8FF),
+    surfaceContainer = Color(0xFFF1F6FF),
+    surfaceContainerHigh = Color(0xFFE9F1FF),
+    surfaceContainerHighest = Color(0xFFE2ECFF),
+    surfaceContainerLow = Color(0xFFF7FAFF),
+    surfaceContainerLowest = Color.White,
+)
+
+/** 鲸鱼娘皮肤的玻璃 token：白霜更厚、描边更亮（浅色下深色 tint 会发灰）。 */
+val WhaleGlassTokens = GlassTokens(
+    surfaceTint = Color.White.copy(alpha = 0.62f),
+    borderHighlight = Color.White.copy(alpha = 0.92f),
+    borderShadow = WhaleBlue.copy(alpha = 0.10f),
+    sheen = Color.White.copy(alpha = 0.26f),
+    ambientShadow = WhaleBlue.copy(alpha = 0.14f),
+    spotShadow = WhaleBlue.copy(alpha = 0.20f),
+    onGlass = WhaleText,
+    onGlassSecondary = WhaleTextSecondary,
+)

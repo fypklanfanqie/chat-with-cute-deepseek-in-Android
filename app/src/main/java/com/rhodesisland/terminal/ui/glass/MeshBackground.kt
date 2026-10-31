@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.rhodesisland.terminal.ui.theme.LocalDarkTheme
+import com.rhodesisland.terminal.ui.theme.LocalWhaleSkin
 
 /**
  * 液态玻璃的背景画布：淡紫 / 冰蓝 / 粉光斑在底色上缓慢漂移，为半透明玻璃面提供可透出的色彩。
@@ -19,7 +20,8 @@ import com.rhodesisland.terminal.ui.theme.LocalDarkTheme
 @Composable
 fun MeshBackground(modifier: Modifier = Modifier) {
     val dark = LocalDarkTheme.current
-    val spec = meshSpec(dark)
+    val whale = LocalWhaleSkin.current
+    val spec = meshSpec(dark, whale)
     // 组合期捕获稳定 State 引用（current 是 @Composable getter，只能在组合上下文读）；
     // draw 阶段再读 `.value`：相位变化只失效绘制、不触发重组。
     val phaseState = LocalMeshPhase.current

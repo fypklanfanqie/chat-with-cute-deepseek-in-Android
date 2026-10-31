@@ -14,6 +14,19 @@ import androidx.core.view.WindowCompat
 val LocalDarkTheme = staticCompositionLocalOf { false }
 
 /**
+ * 鲸鱼娘皮肤开关（全局）。
+ *
+ * 由 MainActivity 从 `whale_settings.skin` 读取后下发：
+ *  - true  → 蓝白海洋肤（[WhaleLightColors] + [WhaleGlassTokens] + 蓝白极光背板）
+ *  - false → 原来的 PRTS 深色（或 Iris 亮色，取决于 [LocalDarkTheme]）
+ *
+ * 之所以用独立的 CompositionLocal 而不是塞进 darkTheme：皮肤本质上不止明暗两态
+ * （未来还可能加第三套），而既有代码大量用 `LocalDarkTheme.current` 做二选一判断，
+ * 不能破坏那套语义。
+ */
+val LocalWhaleSkin = staticCompositionLocalOf { false }
+
+/**
  * Chat by your side · Iris 玻璃主题。
  *
  * - 跟随系统亮/暗
@@ -27,8 +40,17 @@ fun ChatTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (darkTheme) IrisDarkColors else IrisLightColors
-    val glassTokens = if (darkTheme) DarkGlassTokens else LightGlassTokens
+    val whale = LocalWhaleSkin.current
+    val colorScheme = when {
+        whale && !darkTheme -> WhaleLightColors
+        darkTheme -> IrisDarkColors
+        else -> IrisLightColors
+    }
+    val glassTokens = when {
+        whale && !darkTheme -> WhaleGlassTokens
+        darkTheme -> DarkGlassTokens
+        else -> LightGlassTokens
+    }
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {

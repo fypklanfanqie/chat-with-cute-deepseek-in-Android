@@ -6,6 +6,10 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.rhodesisland.terminal.config.AppConfig
 import com.rhodesisland.terminal.data.model.MessageCompletionState
+import com.rhodesisland.terminal.whale.data.WhaleMemoryDao
+import com.rhodesisland.terminal.whale.data.WhaleMemoryEntity
+import com.rhodesisland.terminal.whale.data.WhalePetDao
+import com.rhodesisland.terminal.whale.data.WhalePetEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -292,8 +296,11 @@ interface ConversationDao {
         NovelStoryEntity::class,
         NovelChapterEntity::class,
         NovelLineEntity::class,
+        // 鲸鱼娘模块（v17 -> v18）：长期记忆 + 小鲸鱼养成
+        WhaleMemoryEntity::class,
+        WhalePetEntity::class,
     ],
-    version = 17,
+    version = 18,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -304,6 +311,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun specialEventMemoryDao(): SpecialEventMemoryDao
     abstract fun momentDao(): MomentDao
     abstract fun novelDao(): NovelDao
+    abstract fun whaleMemoryDao(): WhaleMemoryDao
+    abstract fun whalePetDao(): WhalePetDao
 
     companion object {
         @Volatile
@@ -736,6 +745,65 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v17 -> v18：鲸鱼娘模块（长期记忆 + 小鲸鱼养成）。
+         *
+         * 两张**全新**表，纯新增、非破坏式：
+         * - `whale_memory`：长期记忆（四层 tier + 版本链 supersededBy + 软删除），
+         *   索引按检索路径建（createdAt/tier/pinned/normalized）；
+         * - `whale_pet`：养成状态单例行（id 恒为 1，同 `lungmen_wallet` 的单例风格）。
+         *
+         * 列集/类型/顺序与 [WhaleMemoryEntity] / [WhalePetEntity] 完全一致，
+         * 索引名遵循 Room 命名 `index_<表>_<列...>`，否则打开迁移库时 schema 校验失败。
+         */
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `whale_memory` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`text` TEXT NOT NULL, " +
+                        "`normalized` TEXT NOT NULL, " +
+                        "`role` TEXT NOT NULL, " +
+                        "`tier` TEXT NOT NULL, " +
+                        "`sourceChannel` TEXT NOT NULL, " +
+                        "`sessionKey` TEXT NOT NULL, " +
+                        "`messageRef` TEXT NOT NULL, " +
+                        "`tags` TEXT NOT NULL, " +
+                        "`importance` REAL NOT NULL, " +
+                        "`accessCount` INTEGER NOT NULL, " +
+                        "`lastAccessAt` INTEGER NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL, " +
+                        "`supersededBy` INTEGER, " +
+                        "`pinned` INTEGER NOT NULL, " +
+                        "`deletedAt` INTEGER)"
+                )
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_whale_memory_createdAt` ON `whale_memory` (`createdAt`)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_whale_memory_tier` ON `whale_memory` (`tier`)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_whale_memory_pinned` ON `whale_memory` (`pinned`)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_whale_memory_normalized` ON `whale_memory` (`normalized`)")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `whale_pet` (" +
+                        "`id` INTEGER NOT NULL, " +
+                        "`name` TEXT NOT NULL, " +
+                        "`level` INTEGER NOT NULL, " +
+                        "`exp` INTEGER NOT NULL, " +
+                        "`affinity` REAL NOT NULL, " +
+                        "`hunger` REAL NOT NULL, " +
+                        "`mood` REAL NOT NULL, " +
+                        "`coins` REAL NOT NULL, " +
+                        "`totalChats` INTEGER NOT NULL, " +
+                        "`totalRice` INTEGER NOT NULL, " +
+                        "`totalTokens` INTEGER NOT NULL, " +
+                        "`lastTick` INTEGER NOT NULL, " +
+                        "`lastFeed` INTEGER NOT NULL, " +
+                        "`lastPlay` INTEGER NOT NULL, " +
+                        "`lastSleep` INTEGER NOT NULL, " +
+                        "`actionsJson` TEXT NOT NULL, " +
+                        "PRIMARY KEY(`id`))"
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 // 双重检查锁定：避免两个并发首次调用各建一个 RoomDatabase 实例，
@@ -744,7 +812,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "rhodes_chat.db"
-                ).addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17).build().also { INSTANCE = it }
+                ).addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18).build().also { INSTANCE = it }
             }
         }
     }

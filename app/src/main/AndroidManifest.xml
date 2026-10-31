@@ -9,6 +9,10 @@
     <!-- 音频相关 -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
+    <!-- 鲸鱼娘语音输入：系统 SpeechRecognizer 需要录音权限。
+         仅语音输入时申请；不做录音留存，也不上传第三方（走系统识别服务）。 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <!-- 性能监控浮窗（仅本地聊天界面显示，需「显示在其他应用上层」权限） -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 

@@ -56,6 +56,16 @@ class RhodesApp : Application(), ImageLoaderFactory {
         ImageLoader.Builder(this)
             .okHttpClient(PrtsImageLoader.okHttpClient)
             .crossfade(true)
+            // 鲸鱼娘桌宠是动态 WebP（VP9 alpha 转码而来）。Coil 主包只解静态图，
+            // 这里挂上 coil-gif 的 AnimatedImageDecoder（API 28+ 的 ImageDecoder 通路）；
+            // API 24~27 没有 ImageDecoder，退化为首帧静态图——UI 侧另有浮动/呼吸动画兜底。
+            .components {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    add(coil.decode.ImageDecoderDecoder.Factory())
+                } else {
+                    add(coil.decode.GifDecoder.Factory())
+                }
+            }
             .build()
     } catch (e: Throwable) {
         Log.w(TAG, "自定义 ImageLoader 构建失败，回退默认: ${e.message}")

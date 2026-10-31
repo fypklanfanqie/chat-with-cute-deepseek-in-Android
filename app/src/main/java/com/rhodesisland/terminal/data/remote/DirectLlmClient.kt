@@ -69,6 +69,13 @@ class DirectLlmClient(
         onUsage: (suspend (LlmTokenUsage?) -> Unit)? = null,
         temperature: Float? = null,
         maxTokens: Int? = null,
+        /**
+         * DeepSeek V4 系：`"none"` 关闭思考、`"high"` 开启高投入思考。
+         *
+         * **必须显式传 "none"**（鲸鱼娘模块）：该系列默认走思考模式，只产出 `reasoning_content`，
+         * `content` 会是空的——UI 上表现为「一直在转圈但没字」。null = 不发该字段（沿用其它服务商默认）。
+         */
+        reasoningEffort: String? = null,
     ): String = withContext(Dispatchers.IO) {
         // Anthropic 格式：/v1/messages + x-api-key 头 + content_block_delta 流式；
         // 其余端点一律 OpenAI 兼容格式。
@@ -80,7 +87,7 @@ class DirectLlmClient(
                 apiKey = apiKey,
                 body = buildBody(
                     model, messages, stream = true, baseUrl = baseUrl, deepThinking = deepThinking,
-                    temperature = temperature, maxTokens = maxTokens,
+                    temperature = temperature, maxTokens = maxTokens, reasoningEffort = reasoningEffort,
                 ),
                 accept = "text/event-stream",
             )
@@ -355,6 +362,7 @@ class DirectLlmClient(
         responseFormatJson: Boolean = false,
         temperature: Float? = null,
         maxTokens: Int? = null,
+        reasoningEffort: String? = null,
     ): String {
         val obj = buildJsonObject {
             // trim：粘贴带入的首尾空白会让模型名不匹配被上游拒 400。
@@ -372,6 +380,9 @@ class DirectLlmClient(
             // null = 不发该字段、走服务商默认（设置页「自定义生成参数」开关关闭语义）。
             if (temperature != null) put("temperature", temperature)
             if (maxTokens != null) put("max_tokens", maxTokens)
+            // DeepSeek V4：reasoning_effort 显式控制思考档位。不传时该系列默认开启思考，
+            // content 为空、只有 reasoning_content——因此业务侧想「不思考」必须传 "none"。
+            if (reasoningEffort != null) put("reasoning_effort", reasoningEffort)
             // 流式用量：白名单端点请求 include_usage（OpenAI 协议下 usage 附着在末尾空 delta chunk）。
             if (stream && supportsStreamedUsage(baseUrl)) {
                 put("stream_options", buildJsonObject { put("include_usage", true) })

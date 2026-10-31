@@ -1,6 +1,8 @@
 package com.rhodesisland.terminal.ui.navigation
 
 import android.app.Activity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -8,8 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.LayoutModifier
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.Measurable
@@ -18,14 +24,20 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.outlined.Chat
+import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Water
+import androidx.compose.material.icons.outlined.Bookmarks
+import androidx.compose.material.icons.outlined.Face
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Water
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -72,6 +84,11 @@ import com.rhodesisland.terminal.ui.settings.BackendSettingsScreen
 import com.rhodesisland.terminal.ui.settings.SettingsScreen
 import com.rhodesisland.terminal.ui.theme.LocalDynamicAccent
 import com.rhodesisland.terminal.ui.video.EncounterScreen
+import com.rhodesisland.terminal.whale.ui.WhaleChatScreen
+import com.rhodesisland.terminal.whale.ui.WhaleMemoryScreen
+import com.rhodesisland.terminal.whale.ui.WhalePersonasScreen
+import com.rhodesisland.terminal.whale.ui.WhalePetScreen
+import com.rhodesisland.terminal.whale.ui.WhaleSettingsScreen
 import com.rhodesisland.terminal.ui.affinity.DailyCheckinBus
 import com.rhodesisland.terminal.ui.affinity.DailyCheckinDialog
 import com.rhodesisland.terminal.ui.affinity.CheckinShopScreen
@@ -81,23 +98,32 @@ import com.rhodesisland.terminal.ui.affinity.AffinityEventsScreen
 import androidx.compose.ui.graphics.Color
 
 /**
- * 底部导航 Tab 定义
+ * 底部导航 Tab 定义（鲸鱼娘改造后）。
  *
- * 移除了"积分"Tab（付费功能已删除）
- * 新增"模型"Tab（本地 AI 模型管理）
- * 「音乐」Tab 已迁入「设置 → 音乐」二级页，原位置改为「朋友圈」（Moments）。
- * 图标细线化：未选中 Outlined 描边 / 选中 Filled 实心（iOS SF Symbols 风）。
+ * 改造原则：**route 保持不变，只换内容**。
+ * - `chat` 仍是第一项、仍是 startDestination，因此三处 `popUpTo(BottomTab.Chat.route)`
+ *   锚点（问候通知 / 群聊通知 / 角色页选角）全部零改动；
+ * - 原「角色 / 朋友圈 / 模型」三个 Tab 从 dock 撤下，但**路由与页面全部保留**，
+ *   从「更多」菜单与设置页仍可进入——功能不丢，只是不再占底栏。
  */
 sealed class BottomTab(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
-    object Chat : BottomTab("chat", "通讯", Icons.AutoMirrored.Outlined.Chat, Icons.AutoMirrored.Filled.Chat)
+    object Chat : BottomTab("chat", "对话", Icons.AutoMirrored.Outlined.Chat, Icons.AutoMirrored.Filled.Chat)
+    object Pet : BottomTab("pet", "小鲸鱼", Icons.Outlined.Water, Icons.Filled.Water)
+    object Memory : BottomTab("memory", "记忆", Icons.Outlined.Bookmarks, Icons.Filled.Bookmarks)
+    object Personas : BottomTab("personas", "人设", Icons.Outlined.Face, Icons.Filled.Face)
+    object Settings : BottomTab("settings", "设置", Icons.Outlined.Settings, Icons.Filled.Settings)
+
+    // 以下三项不在 dock 中，但保留路由与页面（从「更多 / 设置」进入）
     object Characters : BottomTab("characters", "角色", Icons.Outlined.Person, Icons.Filled.Person)
     object Moments : BottomTab("moments", "朋友圈", Icons.Outlined.PhotoLibrary, Icons.Filled.PhotoLibrary)
     object Models : BottomTab("models", "模型", Icons.Outlined.Storage, Icons.Filled.Storage)
-    object Settings : BottomTab("settings", "设置", Icons.Outlined.Settings, Icons.Filled.Settings)
 }
 
 /** 音乐二级页路由（非 dock Tab：由「设置 → 音乐」进入，返回键回设置页）。 */
 private const val MUSIC_ROUTE = "music"
+
+/** 原 App 的完整设置页（鲸鱼娘设置页里的「原有设置」入口进入）。 */
+private const val LEGACY_SETTINGS_ROUTE = "legacy_settings"
 
 private const val CHECKIN_SHOP_ROUTE = "checkin_shop"
 private const val AFFINITY_ROUTE = "affinity/{characterId}"
@@ -131,7 +157,13 @@ fun AppNavGraph(container: AppContainer, initialChatOpen: Boolean = false) {
             showDailyCheckin = true
         }
     }
-    val tabs = listOf(BottomTab.Chat, BottomTab.Characters, BottomTab.Moments, BottomTab.Models, BottomTab.Settings)
+    val tabs = listOf(
+        BottomTab.Chat,
+        BottomTab.Pet,
+        BottomTab.Memory,
+        BottomTab.Personas,
+        BottomTab.Settings,
+    )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -141,11 +173,13 @@ fun AppNavGraph(container: AppContainer, initialChatOpen: Boolean = false) {
     val view = LocalView.current
     val window = (LocalContext.current as? Activity)?.window
     val isChatTab = currentDestination?.hierarchy?.any { it.route == BottomTab.Chat.route } == true
-    LaunchedEffect(isChatTab) {
+    // 鲸鱼娘皮肤是浅色底，系统栏图标必须用深色；PRTS 深色皮肤仍用白色。
+    val whaleSkin = com.rhodesisland.terminal.ui.theme.LocalWhaleSkin.current
+    LaunchedEffect(isChatTab, whaleSkin) {
         if (!isChatTab) {
             val controller = window?.let { WindowCompat.getInsetsController(it, view) }
-            controller?.isAppearanceLightStatusBars = false
-            controller?.isAppearanceLightNavigationBars = false
+            controller?.isAppearanceLightStatusBars = whaleSkin
+            controller?.isAppearanceLightNavigationBars = whaleSkin
         }
     }
 
@@ -195,7 +229,7 @@ fun AppNavGraph(container: AppContainer, initialChatOpen: Boolean = false) {
                     if (route == currentTabRoute) {
                         // 重选当前 Tab：通讯 Tab 内若已进到聊天页，则回到卡片流首页。
                         if (route == BottomTab.Chat.route) {
-                            feedNavController.popBackStack(FeedRoute.FEED, inclusive = false)
+                            feedNavController.popBackStack(FeedRoute.WHALE, inclusive = false)
                         }
                         return@GlassNavBar
                     }
@@ -243,31 +277,33 @@ fun AppNavGraph(container: AppContainer, initialChatOpen: Boolean = false) {
                 // 返回键可回到卡片流，而非直接退出 App）。
                 NavHost(
                     navController = feedNavController,
-                    startDestination = FeedRoute.FEED,
+                    startDestination = FeedRoute.WHALE,
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    composable(FeedRoute.FEED) {
-                        CharacterFeedHost(
-                            container = container,
+                    // ===== 首屏：鲸鱼娘对话 =====
+                    composable(FeedRoute.WHALE) {
+                        WhaleChatScreen(
                             bottomBarHeight = bottomBarHeight,
-                            onAccent = { accentColor = it },
-                            onOpenChat = { charId ->
-                                feedNavController.navigate(FeedRoute.CHAT) { launchSingleTop = true }
+                            onOpenPet = {
+                                navController.navigate(BottomTab.Pet.route) {
+                                    popUpTo(BottomTab.Chat.route) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             },
-                            onNavigateToCharacters = {
-                                navController.navigate(BottomTab.Characters.route) { launchSingleTop = true }
+                            onOpenMemory = {
+                                navController.navigate(BottomTab.Memory.route) {
+                                    popUpTo(BottomTab.Chat.route) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             },
-                            onOpenEncounter = {
-                                feedNavController.navigate(FeedRoute.ENCOUNTER) { launchSingleTop = true }
-                            },
-                            onOpenGroupChat = {
-                                feedNavController.navigate(FeedRoute.GROUP_LIST) { launchSingleTop = true }
-                            },
-                            onOpenMoments = {
-                                feedNavController.navigate(FeedRoute.MOMENTS) { launchSingleTop = true }
-                            },
-                            onOpenNovel = {
-                                feedNavController.navigate(FeedRoute.NOVEL_HOME) { launchSingleTop = true }
+                            onOpenSettings = {
+                                navController.navigate(BottomTab.Settings.route) {
+                                    popUpTo(BottomTab.Chat.route) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             },
                         )
                     }
@@ -381,7 +417,7 @@ fun AppNavGraph(container: AppContainer, initialChatOpen: Boolean = false) {
                         }
                         // 网格选完角色 → 直达嵌套聊天（弹掉 feed，避免回来又停在卡片流）
                         feedNavController.navigate(FeedRoute.CHAT) {
-                            popUpTo(FeedRoute.FEED)
+                            popUpTo(FeedRoute.WHALE)
                             launchSingleTop = true
                         }
                     },
@@ -439,13 +475,40 @@ fun AppNavGraph(container: AppContainer, initialChatOpen: Boolean = false) {
                                 restoreState = true
                             }
                             feedNavController.navigate(FeedRoute.CHAT) {
-                                popUpTo(FeedRoute.FEED)
+                                popUpTo(FeedRoute.WHALE)
                                 launchSingleTop = true
                             }
                         },
                     )
                 }
             }
+            // ===== 鲸鱼娘改造：小鲸鱼 / 记忆 / 人设 三个新 Tab =====
+            composable(BottomTab.Pet.route) {
+                Box(tabBottomPadding) {
+                    Box(Modifier.fillMaxWidth().widthIn(max = 640.dp)) {
+                        WhalePetScreen()
+                    }
+                }
+            }
+            composable(BottomTab.Memory.route) {
+                Box(tabBottomPadding) {
+                    Box(Modifier.fillMaxWidth().widthIn(max = 640.dp)) {
+                        WhaleMemoryScreen()
+                    }
+                }
+            }
+            composable(BottomTab.Personas.route) {
+                Box(tabBottomPadding) {
+                    Box(Modifier.fillMaxWidth().widthIn(max = 640.dp)) {
+                        WhalePersonasScreen(
+                            onOpenLegacyCharacters = {
+                                navController.navigate(BottomTab.Characters.route) { launchSingleTop = true }
+                            },
+                        )
+                    }
+                }
+            }
+
             composable(BottomTab.Moments.route) {
                 // 朋友圈：与通讯 Tab 一样全出血沉浸设计（自带顶栏与底栏留白），
                 // 故不套 tabBottomPadding；bottomBarHeight 交由页面内部给列表垫底。
@@ -471,20 +534,53 @@ fun AppNavGraph(container: AppContainer, initialChatOpen: Boolean = false) {
                 Box(tabBottomPadding) { Box(Modifier.fillMaxWidth().widthIn(max = 640.dp)) { ModelManagerScreen(container = container) } }
             }
             composable(BottomTab.Settings.route) {
+                // 鲸鱼娘设置页：API Key / 模型 / 语音 / 皮肤 / 数据。
+                // 原 App 的完整设置（世界书、本地模型、音乐、后端…）整体保留在 legacy_settings。
                 Box(tabBottomPadding) {
                     Box(Modifier.fillMaxWidth().widthIn(max = 640.dp)) {
-                        SettingsScreen(
-                            container = container,
-                            onNavigateToBackendSettings = {
-                                navController.navigate("backend_settings") { launchSingleTop = true }
-                            },
-                            onNavigateToLorebook = { bookId ->
-                                navController.navigate(lorebookDetailRoute(bookId)) { launchSingleTop = true }
-                            },
-                            onNavigateToMusic = {
-                                navController.navigate(MUSIC_ROUTE) { launchSingleTop = true }
+                        WhaleSettingsScreen(
+                            onOpenLegacySettings = {
+                                navController.navigate(LEGACY_SETTINGS_ROUTE) { launchSingleTop = true }
                             },
                         )
+                    }
+                }
+            }
+            composable(LEGACY_SETTINGS_ROUTE) {
+                Box(tabBottomPadding) {
+                    Box(Modifier.fillMaxWidth().widthIn(max = 640.dp)) {
+                        Box(Modifier.fillMaxSize()) {
+                            SettingsScreen(
+                                container = container,
+                                onNavigateToBackendSettings = {
+                                    navController.navigate("backend_settings") { launchSingleTop = true }
+                                },
+                                onNavigateToLorebook = { bookId ->
+                                    navController.navigate(lorebookDetailRoute(bookId)) { launchSingleTop = true }
+                                },
+                                onNavigateToMusic = {
+                                    navController.navigate(MUSIC_ROUTE) { launchSingleTop = true }
+                                },
+                            )
+                            // 返回入口：原设置页没有返回键（原是 dock 根页），这里叠一个浮动胶囊
+                            androidx.compose.foundation.layout.Box(
+                                Modifier
+                                    .fillMaxSize()
+                                    .windowInsetsPadding(WindowInsets.statusBars)
+                                    .padding(start = 14.dp, top = 6.dp),
+                            ) {
+                                androidx.compose.material3.Text(
+                                    "‹ 返回",
+                                    modifier = Modifier
+                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(999.dp))
+                                        .background(androidx.compose.ui.graphics.Color.White.copy(alpha = 0.86f))
+                                        .clickable { navController.popBackStack() }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    color = androidx.compose.ui.graphics.Color(0xFF4D6BFE),
+                                    fontSize = 12.sp,
+                                )
+                            }
+                        }
                     }
                 }
             }

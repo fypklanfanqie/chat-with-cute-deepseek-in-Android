@@ -37,6 +37,7 @@ import com.rhodesisland.terminal.ui.glass.MeshBackground
 import com.rhodesisland.terminal.ui.groupchat.GroupNavigationBus
 import com.rhodesisland.terminal.ui.navigation.AppNavGraph
 import com.rhodesisland.terminal.ui.theme.ChatTheme
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -150,9 +151,18 @@ class MainActivity : ComponentActivity() {
             }
             val resolvedLanguage = L10n.resolve(appLanguageSetting, systemLanguageTag)
 
-            // PRTS 深色主题：固定深色（themeMode 设置保留但不再生效）。
-            val darkTheme = true
+            // 皮肤：whale = DeepSeek 蓝白海洋（亮色）；prts = 原 PRTS 深色终端。
+            // 整 App 可切肤：一个开关同时决定 MaterialTheme 调色板、玻璃 token、极光背板。
+            val skin by app.container.whaleSettingsRepository.flow
+                .map { it.skin }
+                .collectAsState(initial = com.rhodesisland.terminal.whale.settings.WhaleSettings.SKIN_WHALE)
+            val whaleSkin = skin == com.rhodesisland.terminal.whale.settings.WhaleSettings.SKIN_WHALE
+            // PRTS 深色主题：非鲸鱼娘皮肤时固定深色（themeMode 设置保留但不再生效）。
+            val darkTheme = !whaleSkin
             // GlassBackdrop 提供真实背景模糊背板，供所有玻璃面板采样。
+            CompositionLocalProvider(
+                com.rhodesisland.terminal.ui.theme.LocalWhaleSkin provides whaleSkin,
+            ) {
             ChatTheme(darkTheme = darkTheme) {
                 // 语言切换即时生效：static CompositionLocal 变化 → 整棵子树重组，无需重建 Activity。
                 CompositionLocalProvider(LocalAppLanguage provides resolvedLanguage) {
@@ -188,6 +198,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
             }
         }
     }

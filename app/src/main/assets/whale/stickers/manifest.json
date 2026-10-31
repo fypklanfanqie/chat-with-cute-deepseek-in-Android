@@ -1,0 +1,218 @@
+[
+  {
+    "id": "sticker-01",
+    "file": "sticker-01.webp",
+    "label": "开心",
+    "tags": [
+      "开心",
+      "眨眼"
+    ]
+  },
+  {
+    "id": "sticker-02",
+    "file": "sticker-02.webp",
+    "label": "大笑",
+    "tags": [
+      "开心",
+      "大笑"
+    ]
+  },
+  {
+    "id": "sticker-03",
+    "file": "sticker-03.webp",
+    "label": "微笑",
+    "tags": [
+      "开心",
+      "温柔"
+    ]
+  },
+  {
+    "id": "sticker-04",
+    "file": "sticker-04.webp",
+    "label": "憨笑",
+    "tags": [
+      "开心",
+      "憨"
+    ]
+  },
+  {
+    "id": "sticker-05",
+    "file": "sticker-05.webp",
+    "label": "开怀",
+    "tags": [
+      "开心",
+      "闭眼笑"
+    ]
+  },
+  {
+    "id": "sticker-06",
+    "file": "sticker-06.webp",
+    "label": "温柔",
+    "tags": [
+      "温柔",
+      "微笑"
+    ]
+  },
+  {
+    "id": "sticker-07",
+    "file": "sticker-07.webp",
+    "label": "卖萌",
+    "tags": [
+      "可爱",
+      "眨眼"
+    ]
+  },
+  {
+    "id": "sticker-08",
+    "file": "sticker-08.webp",
+    "label": "生气",
+    "tags": [
+      "生气",
+      "打扫"
+    ]
+  },
+  {
+    "id": "sticker-09",
+    "file": "sticker-09.webp",
+    "label": "震惊",
+    "tags": [
+      "震惊",
+      "大喊"
+    ]
+  },
+  {
+    "id": "sticker-10",
+    "file": "sticker-10.webp",
+    "label": "惊讶",
+    "tags": [
+      "惊讶",
+      "张嘴"
+    ]
+  },
+  {
+    "id": "sticker-11",
+    "file": "sticker-11.webp",
+    "label": "疑惑",
+    "tags": [
+      "疑惑",
+      "发呆"
+    ]
+  },
+  {
+    "id": "sticker-12",
+    "file": "sticker-12.webp",
+    "label": "紧张",
+    "tags": [
+      "紧张",
+      "冒汗"
+    ]
+  },
+  {
+    "id": "sticker-13",
+    "file": "sticker-13.webp",
+    "label": "委屈",
+    "tags": [
+      "委屈",
+      "难过"
+    ]
+  },
+  {
+    "id": "sticker-14",
+    "file": "sticker-14.webp",
+    "label": "乖巧",
+    "tags": [
+      "乖巧",
+      "坐姿"
+    ]
+  },
+  {
+    "id": "sticker-15",
+    "file": "sticker-15.webp",
+    "label": "呆萌",
+    "tags": [
+      "可爱",
+      "呆"
+    ]
+  },
+  {
+    "id": "sticker-16",
+    "file": "sticker-16.webp",
+    "label": "期待",
+    "tags": [
+      "期待",
+      "元气"
+    ]
+  },
+  {
+    "id": "sticker-17",
+    "file": "sticker-17.webp",
+    "label": "登场",
+    "tags": [
+      "全身",
+      "登场"
+    ]
+  },
+  {
+    "id": "sticker-18",
+    "file": "sticker-18.webp",
+    "label": "看海",
+    "tags": [
+      "全身",
+      "氛围"
+    ]
+  },
+  {
+    "id": "sticker-19",
+    "file": "sticker-19.webp",
+    "label": "挥手",
+    "tags": [
+      "打招呼",
+      "挥手"
+    ]
+  },
+  {
+    "id": "sticker-20",
+    "file": "sticker-20.webp",
+    "label": "收到",
+    "tags": [
+      "敬礼",
+      "好的"
+    ]
+  },
+  {
+    "id": "sticker-21",
+    "file": "sticker-21.webp",
+    "label": "加油",
+    "tags": [
+      "加油",
+      "元气"
+    ]
+  },
+  {
+    "id": "sticker-22",
+    "file": "sticker-22.webp",
+    "label": "困困",
+    "tags": [
+      "困",
+      "摆烂"
+    ]
+  },
+  {
+    "id": "sticker-23",
+    "file": "sticker-23.webp",
+    "label": "病娇",
+    "tags": [
+      "病娇",
+      "黑化"
+    ]
+  },
+  {
+    "id": "sticker-24",
+    "file": "sticker-24.webp",
+    "label": "吃饱",
+    "tags": [
+      "吃饭",
+      "满足"
+    ]
+  }
+]

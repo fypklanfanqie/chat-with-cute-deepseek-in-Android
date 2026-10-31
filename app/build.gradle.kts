@@ -187,6 +187,11 @@ dependencies {
 
     // Coil
     implementation(libs.coil.compose)
+    // coil-gif：桌宠动画（动态 WebP/WebP alpha）解码，Coil 主包只解静态图
+    implementation(libs.coil.gif)
+
+    // 鲸鱼娘模块：API Key 加密存储（EncryptedSharedPreferences / Keystore）
+    implementation(libs.security.crypto)
 
     // Media3
     implementation(libs.androidx.media3.exoplayer)

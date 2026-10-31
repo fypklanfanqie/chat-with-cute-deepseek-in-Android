@@ -42,6 +42,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import android.util.Log
 import com.rhodesisland.terminal.ui.theme.LocalDarkTheme
+import com.rhodesisland.terminal.ui.theme.LocalWhaleSkin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -59,9 +60,22 @@ internal data class MeshBlobSpec(val color: Color, val alpha: Float)
 
 internal data class MeshSpec(val base: Color, val blobs: List<MeshBlobSpec>)
 
-/** 亮/暗两套极光配色。暗色：PRTS 深藏青底 + 金/青光斑（透出玻璃后呈液态光感）；亮色保留原淡紫/冰蓝/粉。 */
-internal fun meshSpec(dark: Boolean): MeshSpec =
-    if (dark) MeshSpec(
+/**
+ * 三套极光配色：
+ * - 暗色：PRTS 深藏青底 + 金/青光斑（透出玻璃后呈液态光感）；
+ * - 亮色（默认）：淡紫/冰蓝/粉；
+ * - [whale]：DeepSeek 蓝白海洋风（浅蓝底 + 三种蓝光斑），鲸鱼娘皮肤与「整 App 切肤」共用。
+ */
+internal fun meshSpec(dark: Boolean, whale: Boolean = false): MeshSpec =
+    if (whale) MeshSpec(
+        base = Color(0xFFF2F7FF),
+        blobs = listOf(
+            MeshBlobSpec(Color(0xFF4D6BFE), 0.20f),  // DeepSeek 主蓝
+            MeshBlobSpec(Color(0xFF6D8BFF), 0.24f),  // 浅蓝
+            MeshBlobSpec(Color(0xFF9FD8FF), 0.22f),  // 海水青
+            MeshBlobSpec(Color(0xFFBBD3FF), 0.26f),  // 雾蓝铺底
+        ),
+    ) else if (dark) MeshSpec(
         base = Color(0xFF0A0A0F),
         blobs = listOf(
             MeshBlobSpec(Color(0xFFC9A87C), 0.24f),  // 罗德岛金
@@ -110,6 +124,7 @@ class BackdropState {
     private val blurBitmaps = arrayOfNulls<Bitmap>(2)
     private var frameIndex = 0
     private var cachedDark: Boolean? = null
+    private var cachedWhale: Boolean? = null
     private var cachedSpec: MeshSpec? = null
 
     /** 玻璃面板所在窗口是否与本背板同窗口。Dialog / ModalBottomSheet 是独立 window，需回退半透明。 */
@@ -124,7 +139,13 @@ class BackdropState {
     }
 
     /** 渲染一帧：先画清晰网格到 [meshBitmap]，再模糊 + 调饱和到当前帧模糊位图并发布。 */
-    fun renderFrame(phase: Float, dark: Boolean, blurRadiusPx: Float, saturation: Float) {
+    fun renderFrame(
+        phase: Float,
+        dark: Boolean,
+        blurRadiusPx: Float,
+        saturation: Float,
+        whale: Boolean = false,
+    ) {
         val size = rootSize
         if (size.width <= 0 || size.height <= 0) return
         val w = max(1, (size.width / downscale).roundToInt())
@@ -136,15 +157,16 @@ class BackdropState {
             frameIndex = 0
         }
         val target = blurBitmaps[frameIndex]!!
-        renderBackdrop(meshBitmap!!, target, specFor(dark), phase, blurRadiusPx, saturation)
+        renderBackdrop(meshBitmap!!, target, specFor(dark, whale), phase, blurRadiusPx, saturation)
         bitmap = target.asImageBitmap()
         frameIndex = 1 - frameIndex
     }
 
-    private fun specFor(dark: Boolean): MeshSpec {
-        if (cachedDark != dark) {
+    private fun specFor(dark: Boolean, whale: Boolean): MeshSpec {
+        if (cachedDark != dark || cachedWhale != whale) {
             cachedDark = dark
-            cachedSpec = meshSpec(dark)
+            cachedWhale = whale
+            cachedSpec = meshSpec(dark, whale)
         }
         return cachedSpec!!
     }
@@ -227,6 +249,7 @@ fun GlassBackdrop(
 ) {
     val state = remember { BackdropState() }
     val dark = LocalDarkTheme.current
+    val whale = LocalWhaleSkin.current
     val density = LocalDensity.current
     val view = LocalView.current
     // 模糊半径按 downscale 缩放：在 1/4 背板上直接用全分辨率半径会过度模糊且更贵，缩放到低分辨率等价半径。
@@ -268,12 +291,12 @@ fun GlassBackdrop(
     // ~30fps 后台渲染循环：CPU 位图模糊不占主线程，滚动时不抢帧。
     // renderFrame 包 runCatching：低内存机型 createBitmap/BlurMaskFilter 可能抛 OOM/
     // IllegalStateException——失败只跳过本帧（玻璃面板回退半透明），绝不让渲染循环带崩进程。
-    LaunchedEffect(state, dark, blurRadiusPx) {
+    LaunchedEffect(state, dark, whale, blurRadiusPx) {
         withContext(Dispatchers.Default) {
             while (isActive) {
                 if (isVisible) {
                     runCatching {
-                        state.renderFrame(phase.value, dark, blurRadiusPx, BACKDROP_SATURATION)
+                        state.renderFrame(phase.value, dark, blurRadiusPx, BACKDROP_SATURATION, whale)
                     }.onFailure { Log.w("GlassBackdrop", "renderFrame failed: ${it.message}") }
                 }
                 delay(FRAME_INTERVAL_MILLIS)
