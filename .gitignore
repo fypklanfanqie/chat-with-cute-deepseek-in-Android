@@ -43,3 +43,6 @@ __pycache__/
 keystore.properties
 keystore/*.jks
 keystore/*.keystore
+
+# 本地工作记忆（不入库）
+.workbuddy/
